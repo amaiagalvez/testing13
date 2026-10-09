@@ -4,13 +4,10 @@ NODE_VERSION="24-bullseye"
 USER="$(id -u)"
 GROUP="$(id -g)"
 
-COMPOSER_VERSION=2
-XDEBUG_CLIENT_HOST="172.17.0.1"
-
 # Carpeta base del proyecto: de ella cuelgan packages/, demos/ y dc-data/.
 # Se calcula a partir de la ubicacion del script (testing13 -> l13), asi que no
 # hay que escribirla a mano en ningun sitio.
-BASE_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # Caches que comparten los contenedores. Se crean en el host como tu usuario
 # para que nada se genere como root.
