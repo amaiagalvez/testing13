@@ -7,20 +7,23 @@ function npmRunProd {
     local install_status=0
 
     echo -e " ${BLUE}>>>>> $1 <<<<<<${NC}"
-    cd ../$1
-   
-   clear_public
-    docker run -u 0 --rm \
-        -v $HOME/Mahaigiana/l13/dc-data/npmCache:/npmCache \
-        -v $HOME/Mahaigiana/l13/Packages:/packages \
-        -v $(pwd):/app -w /app node:$NODE_VERSION \
+    cd "$PACKAGES_DIR/$1"
+
+    clear_public
+    ensure_dirs
+
+    docker run --rm --entrypoint "" -u $USER:$GROUP \
+        -e HOME=/tmp \
+        -e NPM_CONFIG_CACHE=/npmCache \
+        -e NPM_CONFIG_UPDATE_NOTIFIER=false \
+        -v $NPM_CACHE:/npmCache \
+        -v $PACKAGES_DIR:/packages \
+        -v $(pwd):/app-docker -w /app-docker node:$NODE_VERSION \
         bash -c "npm run prod"
 
     install_status=$?
 
-    sudo chown -R $USER:$GROUP .
-
-    cd ../testing13
+    cd "$SCRIPT_DIR"
     echo " "
 
     return $install_status

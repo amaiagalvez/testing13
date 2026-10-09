@@ -7,23 +7,26 @@ function composerInstall {
     local install_status=0
 
     echo -e " ${BLUE}>>>>> $1 <<<<<<${NC}"
-    cd ../$1
+    cd "$PACKAGES_DIR/$1"
 
-    sudo rm -f composer.lock
-    sudo rm -rf vendor
-    sudo rm -rf tests/coverage
+    remove_path vendor || return 1
+    remove_path composer.lock
+    remove_path tests/coverage
 
-    docker run -u 0 --rm \
-        -v $HOME/Mahaigiana/l13/dc-data/composerCache:/composerCache \
-        -v $HOME/Mahaigiana/l13/Packages:/packages \
-        -v $(pwd):/app -w /app webdevops/php-apache-dev:$PHP_VERSION \
-        bash -c "composer config -g cache-dir /composerCache; rm -Rf vendor/iztkoop && rm -f composer.lock && composer --no-progress --optimize-autoloader install && { composer show | grep izt || true; }"
+    ensure_dirs
+
+    docker run --rm --entrypoint "" -u $USER:$GROUP \
+        -e HOME=/tmp \
+        -e COMPOSER_HOME=/tmp/composer \
+        -e COMPOSER_CACHE_DIR=/composerCache \
+        -v $COMPOSER_CACHE:/composerCache \
+        -v $PACKAGES_DIR:/packages \
+        -v $(pwd):/app-docker -w /app-docker webdevops/php-apache-dev:$PHP_VERSION \
+        bash -c "composer --no-progress --optimize-autoloader install && { composer show | grep izt || true; }"
 
     install_status=$?
 
-    sudo chown -R $USER:$GROUP .
-
-    cd ../testing13
+    cd "$SCRIPT_DIR"
     echo " "
 
     return $install_status

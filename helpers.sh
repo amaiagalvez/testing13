@@ -58,6 +58,26 @@ find_by_short(){
     return 1
 }
 
+# Crea las carpetas de cache en el host como tu usuario, para que los
+# contenedores no escriban nada como root.
+ensure_dirs(){
+    mkdir -p "$COMPOSER_CACHE"
+    mkdir -p "$NPM_CACHE"
+}
+
+# Borra una ruta; avisa si quedan restos creados como root.
+remove_path(){
+    local target="$1"
+
+    [ -e "$target" ] || return 0
+
+    if ! rm -Rf "$target" 2>/dev/null; then
+        echo -e "   ${RED}Ezin da $target ezabatu: root-ek sortutako fitxategiak ditu.${NC}"
+        echo -e "   ${YELLOW}Konpondu jabetza: sudo chown -R \$USER:\$GROUP .${NC}"
+        return 1
+    fi
+}
+
 run_repo_command() {
     local repo_path="$1"
     local command_name="$2"
@@ -90,6 +110,6 @@ clear_public(){
 
     local item
     for item in "${items[@]}"; do
-        sudo rm -Rfv "$item"
+        rm -Rfv "$item"
     done
 }

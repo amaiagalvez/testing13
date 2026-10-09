@@ -7,24 +7,27 @@ function npmInstall {
     local install_status=0
 
     echo -e " ${BLUE}>>>>> $1 <<<<<<${NC}"
-    cd ../$1
+    cd "$PACKAGES_DIR/$1"
 
-    sudo rm package-lock.json
-    sudo rm -R node_modules
+    remove_path node_modules || return 1
+    remove_path package-lock.json
 
-    docker run -u 0 --rm \
-        -v $HOME/Mahaigiana/l13/dc-data/npmCache:/npmCache \
-        -v $HOME/Mahaigiana/l13/Packages:/packages \
-        -v $(pwd):/app -w /app node:$NODE_VERSION \
-        bash -c "npm config set cache /npmCache --global && rm -f package-lock.json  && rm -Rf node_modules && npm install"
+    ensure_dirs
+
+    docker run --rm --entrypoint "" -u $USER:$GROUP \
+        -e HOME=/tmp \
+        -e NPM_CONFIG_CACHE=/npmCache \
+        -e NPM_CONFIG_UPDATE_NOTIFIER=false \
+        -v $NPM_CACHE:/npmCache \
+        -v $PACKAGES_DIR:/packages \
+        -v $(pwd):/app-docker -w /app-docker node:$NODE_VERSION \
+        bash -c "npm install"
 
     install_status=$?
 
-    sudo chown -R $USER:$GROUP .
+    cd "$SCRIPT_DIR"
+    bash "$SCRIPT_DIR/npmRunProd.sh" "$1"
 
-    cd ../testing13
-    bash npmRunProd.sh $1
-    
     echo " "
 
     return $install_status
