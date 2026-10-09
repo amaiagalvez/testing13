@@ -195,10 +195,11 @@ clear_public(){
 run_in_package(){
     local action="$1"
     local package="$2"
+    local coverage_mode="${3:-}"
 
     echo -e " ${BLUE}>>>>> $package <<<<<<${NC}"
 
-    ( cd "$PACKAGES_DIR/$package" && "$action" "$package" )
+    ( cd "$PACKAGES_DIR/$package" && "$action" "$package" "$coverage_mode" )
     local status=$?
 
     echo " "
@@ -218,7 +219,8 @@ run_tool(){
         local package
         package="$(resolve_package "$target")" || not_found
 
-        run_in_package "$action" "$package"
+        # Pass remaining args (coverage mode) to run_in_package
+        run_in_package "$action" "$package" "$@"
         exit $?
     fi
 
