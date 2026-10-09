@@ -125,7 +125,7 @@ pull_image(){
 # Contenedor PHP montado sobre el paquete actual.
 docker_php(){
     docker run --rm --entrypoint "" -u "$USER:$GROUP" \
-        -e HOME=/tmp \
+        -e XDEBUG_MODE=off -e HOME=/tmp \
         -v "$(pwd)":/app-docker -w /app-docker "webdevops/php-apache-dev:$PHP_VERSION" \
         bash -c "$1"
 }
