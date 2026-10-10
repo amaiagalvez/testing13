@@ -10,5 +10,5 @@ review(){
     docker_php "vendor/bin/phpstan analyse --memory-limit=1G"
 }
 
-pull_image "webdevops/php-apache-dev:$PHP_VERSION"
+pull_image "webdevops/php-apache-dev:$PHP_VERSION" || exit 1
 run_tool review "${1:-}" "$PACKAGES"

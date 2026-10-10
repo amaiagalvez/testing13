@@ -15,5 +15,5 @@ composerInstall(){
     docker_composer "composer --no-progress --optimize-autoloader install && { composer show | grep izt || true; }"
 }
 
-pull_image "webdevops/php-apache-dev:$PHP_VERSION"
+pull_image "webdevops/php-apache-dev:$PHP_VERSION" || exit 1
 run_tool composerInstall "${1:-}" "$PACKAGES"

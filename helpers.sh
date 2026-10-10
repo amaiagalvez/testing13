@@ -117,8 +117,13 @@ missing_config(){
     echo -e "   ${YELLOW}Ez dago $1: paketeak konfigurazioa behar du.${NC}"
 }
 
-# Descarga la imagen una sola vez, antes de recorrer los paquetes.
+# Reutiliza la imagen local; solo la descarga cuando falta.
 pull_image(){
+    if docker image inspect "$1" >/dev/null 2>&1; then
+        printf 'Usando imagen local: %s\n' "$1"
+        return 0
+    fi
+
     docker pull "$1"
 }
 

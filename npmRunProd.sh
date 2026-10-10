@@ -10,5 +10,5 @@ npmRunProd(){
     docker_node "npm run prod"
 }
 
-pull_image "node:$NODE_VERSION"
+pull_image "node:$NODE_VERSION" || exit 1
 run_tool npmRunProd "${1:-}" "$PACKAGES" "$DEMOS"

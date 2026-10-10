@@ -63,5 +63,5 @@ phpunit(){
     fi
 }
 
-pull_image "webdevops/php-apache-dev:$PHP_VERSION"
+pull_image "webdevops/php-apache-dev:$PHP_VERSION" || exit 1
 run_tool phpunit "${1:-}" "${2:-}" "$PACKAGES"

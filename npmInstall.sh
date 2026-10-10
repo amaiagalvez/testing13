@@ -16,5 +16,5 @@ npmInstall(){
     bash "$SCRIPT_DIR/npmRunProd.sh" "$package"
 }
 
-pull_image "node:$NODE_VERSION"
+pull_image "node:$NODE_VERSION" || exit 1
 run_tool npmInstall "${1:-}" "$PACKAGES"
