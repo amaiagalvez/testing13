@@ -18,14 +18,14 @@ phpunit(){
     # Modo coverage: segunda posición "coverage" o "c"
     if [ "$coverage_mode" = "coverage" ] || [ "$coverage_mode" = "c" ]; then
         # Para coverage HTML, activamos XDEBUG_MODE=coverage y generamos reporte HTML
-        docker_php "XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-html=tests/coverage/html"
+        docker_php "XDEBUG_MODE=coverage vendor/bin/phpunit --display-phpunit-notices --coverage-html=tests/coverage/html"
         # Abrir reporte de cobertura en el navegador
         if [ -f tests/coverage/html/index.html ]; then
             xdg-open tests/coverage/html/index.html 2>/dev/null || firefox tests/coverage/html/index.html 2>/dev/null || echo "Reporte generado en: tests/coverage/html/index.html"
         fi
     else
         # Modo normal: pasar XDEBUG_MODE=off
-        docker_php "XDEBUG_MODE=off vendor/bin/phpunit"
+        docker_php "XDEBUG_MODE=off vendor/bin/phpunit --display-phpunit-notices"
     fi
 }
 
