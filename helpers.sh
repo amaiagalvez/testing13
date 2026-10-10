@@ -131,6 +131,7 @@ pull_image(){
 docker_php(){
     docker run --rm --entrypoint "" -u "$USER:$GROUP" \
         -e XDEBUG_MODE=off -e HOME=/tmp \
+        -v "$PACKAGES_DIR":/packages \
         -v "$(pwd)":/app-docker -w /app-docker "webdevops/php-apache-dev:$PHP_VERSION" \
         bash -c "$1"
 }
