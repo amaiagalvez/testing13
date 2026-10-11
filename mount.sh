@@ -45,6 +45,9 @@ mkdir -p "$SCRIPT_DIR/../packages" || fail "Could not create the packages direct
 source "$SCRIPT_DIR/helpers.sh"
 
 [ -f "$PACKAGES" ] || fail "$PACKAGES not found."
+PROJECTS="$SCRIPT_DIR/02.projects.txt"
+[ -f "$PROJECTS" ] || fail "$PROJECTS not found."
+
 if [ "${1:-}" = "all" ]; then
     [ -f "$SCRIPT_DIR/runAll.sh" ] || fail "runAll.sh not found."
 fi
@@ -60,45 +63,67 @@ done < "$PACKAGES"
 
 [ "${#packages[@]}" -gt 0 ] || fail "No packages found in $PACKAGES."
 
+projects=()
+while IFS= read -r line || [ -n "$line" ]; do
+    project="$(parse_name "$line")" || fail "Could not read the project: $line."
+    [ -n "$project" ] || continue
+
+    [[ "$project" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]] || fail "Invalid project name: $project."
+    projects+=("$project")
+done < "$PROJECTS"
+
+repositories=("${packages[@]}" "${projects[@]}")
+repository_paths=()
 for package in "${packages[@]}"; do
-    if [ -d "$PACKAGES_DIR/$package" ]; then
-        printf 'Keeping existing package: %s\n' "$package"
+    repository_paths+=("$PACKAGES_DIR/$package")
+done
+for project in "${projects[@]}"; do
+    repository_paths+=("$SCRIPT_DIR/../$project")
+done
+
+for index in "${!repositories[@]}"; do
+    repository="${repositories[$index]}"
+    repository_path="${repository_paths[$index]}"
+    if [ -d "$repository_path" ]; then
+        printf 'Keeping existing repository: %s\n' "$repository"
         continue
     fi
 
-    printf '\n>>>>> Cloning %s <<<<<<\n' "$package"
-    git clone "https://github.com/amaiagalvez/$package.git" "$PACKAGES_DIR/$package" < /dev/null || {
+    printf '\n>>>>> Cloning %s <<<<<<\n' "$repository"
+    git clone "https://github.com/amaiagalvez/$repository.git" "$repository_path" < /dev/null || {
         status=$?
-        fail "Could not clone $package (exit code $status). runAll will not be executed." "$status"
+        fail "Could not clone $repository (exit code $status). Stopping." "$status"
     }
 done
 
-for package in "${packages[@]}"; do
-    printf '\n>>>>> Updating %s <<<<<<\n' "$package"
-    changes="$(git -C "$PACKAGES_DIR/$package" status --porcelain --untracked-files=all)" || {
+for index in "${!repositories[@]}"; do
+    repository="${repositories[$index]}"
+    repository_path="${repository_paths[$index]}"
+    printf '\n>>>>> Updating %s <<<<<<\n' "$repository"
+    changes="$(git -C "$repository_path" status --porcelain --untracked-files=all)" || {
         status=$?
-        fail "Could not check the working tree for $package (exit code $status). Stopping." "$status"
+        fail "Could not check the working tree for $repository (exit code $status). Stopping." "$status"
     }
     if [ -n "$changes" ]; then
         printf '\033[0;31m%s\033[0m\n' "$changes" >&2
-        fail "$package has uncommitted changes or untracked files. Commit or stash them before continuing. Stopping."
+        fail "$repository has uncommitted changes or untracked files. Commit or stash them before continuing. Stopping."
     fi
 
-    git -C "$PACKAGES_DIR/$package" pull --ff-only < /dev/null || {
+    git -C "$repository_path" pull --ff-only < /dev/null || {
         status=$?
-        fail "Could not update $package (exit code $status). Check the Git error and any uncommitted changes. Stopping." "$status"
+        fail "Could not update $repository (exit code $status). Check the Git error and any uncommitted changes. Stopping." "$status"
     }
 
     for branch in master develop; do
-        printf '\n>>>>> Updating %s: %s <<<<<<\n' "$package" "$branch"
-        git -C "$PACKAGES_DIR/$package" switch "$branch" < /dev/null || {
+        printf '\n>>>>> Updating %s: %s <<<<<<\n' "$repository" "$branch"
+        git -C "$repository_path" switch "$branch" < /dev/null || {
             status=$?
-            fail "Could not switch $package to $branch (exit code $status). Check the Git error and any uncommitted changes. Stopping." "$status"
+            fail "Could not switch $repository to $branch (exit code $status). Check the Git error and any uncommitted changes. Stopping." "$status"
         }
 
-        git -C "$PACKAGES_DIR/$package" pull --ff-only < /dev/null || {
+        git -C "$repository_path" pull --ff-only < /dev/null || {
             status=$?
-            fail "Could not update $package on $branch (exit code $status). Check the Git error and any uncommitted changes. Stopping." "$status"
+            fail "Could not update $repository on $branch (exit code $status). Check the Git error and any uncommitted changes. Stopping." "$status"
         }
     done
 done
@@ -126,5 +151,5 @@ for script in "${link_scripts[@]}"; do
     }
 done
 
-printf '\nProcess completed for all packages.\n'
+printf '\nProcess completed for all packages and projects.\n'
 }
