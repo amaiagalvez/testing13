@@ -7,14 +7,12 @@
  * end-chisel markers and are properly structured.
  *
  * Run from workspace root (l13/):
- *   docker compose -f projects/demo13/docker-compose.yml run --rm -e XDEBUG_MODE=off \
- *     -v "$(pwd)/testing13:/testing13" -w /app-docker \
- *     laravel13 php /testing13/chisel-integrity-test.php
+ *   docker compose -f projects/demo13/docker-compose.yml run --rm --no-deps -e XDEBUG_MODE=off \
+      -v "$(pwd)/testing13:/testing13" -w /app-docker \
+      --entrypoint php laravel13 /testing13/tests/chisel-integrity-test.php
  *
- * Or copy to project first:
- *   cp testing13/chisel-integrity-test.php projects/demo13/
- *   docker compose -f projects/demo13/docker-compose.yml run --rm -e XDEBUG_MODE=off \
- *     -w /app-docker laravel13 php chisel-integrity-test.php
+ * From projects/demo13/, use -f docker-compose.yml and mount
+ * "$(pwd)/../../testing13:/testing13" instead.
  */
 
 // Detect base path: if /app-docker exists (running in container), use it.
@@ -22,16 +20,25 @@
 if (is_dir('/app-docker')) {
     $basePath = '/app-docker';
 } else {
-    $basePath = __DIR__ . '/../projects/demo13';
+    $basePath = __DIR__.'/../../projects/demo13';
 }
 
-$phpFiles = new RecursiveIteratorIterator(
+$sourceFiles = new RecursiveCallbackFilterIterator(
     new RecursiveDirectoryIterator($basePath, RecursiveDirectoryIterator::SKIP_DOTS),
+    static function (SplFileInfo $file) use ($basePath): bool {
+        return ! ($file->isDir()
+            && $file->getPath() === $basePath
+            && in_array($file->getFilename(), ['.git', 'dc-data', 'node_modules', 'storage', 'vendor'], true));
+    }
+);
+
+$phpFiles = new RecursiveIteratorIterator(
+    $sourceFiles,
     RecursiveIteratorIterator::LEAVES_ONLY
 );
 
 $bladeFiles = new RecursiveIteratorIterator(
-    new RecursiveDirectoryIterator($basePath . '/resources/views', RecursiveDirectoryIterator::SKIP_DOTS),
+    new RecursiveDirectoryIterator($basePath.'/resources/views', RecursiveDirectoryIterator::SKIP_DOTS),
     RecursiveIteratorIterator::LEAVES_ONLY
 );
 
@@ -57,7 +64,7 @@ foreach ($allFiles as $filePath) {
         continue;
     }
 
-    $relativePath = str_replace($basePath . '/', '', $filePath);
+    $relativePath = str_replace($basePath.'/', '', $filePath);
     $lines = explode("\n", $content);
     $inBladeComment = false;
 
@@ -97,7 +104,7 @@ foreach ($allFiles as $filePath) {
                 }
             }
 
-            if (!$found) {
+            if (! $found) {
                 $errors[] = "[$relativePath:$lineNum] Unmatched @end-chisel-$feature (no opening marker)";
             }
         }
@@ -113,11 +120,11 @@ foreach ($markerStack as $marker) {
 echo "Chisel Markers Integrity Check\n";
 echo "==============================\n";
 echo "Base path: $basePath\n";
-echo "Files scanned: " . count($allFiles) . "\n";
-echo "Errors: " . count($errors) . "\n";
-echo "Warnings: " . count($warnings) . "\n\n";
+echo 'Files scanned: '.count($allFiles)."\n";
+echo 'Errors: '.count($errors)."\n";
+echo 'Warnings: '.count($warnings)."\n\n";
 
-if (!empty($errors)) {
+if (! empty($errors)) {
     echo "ERRORS:\n";
     foreach ($errors as $error) {
         echo "  - $error\n";
@@ -126,7 +133,7 @@ if (!empty($errors)) {
     exit(1);
 }
 
-if (!empty($warnings)) {
+if (! empty($warnings)) {
     echo "WARNINGS:\n";
     foreach ($warnings as $warning) {
         echo "  - $warning\n";
