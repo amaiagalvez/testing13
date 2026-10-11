@@ -16,6 +16,50 @@ fail(){
     exit "${2:-1}"
 }
 
+# Git
+
+# Fails when the repository has local changes or untracked files; git pull
+# would not notice them, so the pull has to be blocked explicitly.
+assert_clean_tree(){
+    local repo_path="$1"
+    local name="$2"
+    local status=0
+
+    local changes
+    changes="$(git -C "$repo_path" status --porcelain --untracked-files=all)" || {
+        status=$?
+        fail "Could not check the working tree for $name (exit code $status). Stopping." "$status"
+    }
+
+    if [ -n "$changes" ]; then
+        printf "${RED}%s${NC}\n" "$changes" >&2
+        fail "$name has uncommitted changes or untracked files. Commit or stash them before continuing. Stopping."
+    fi
+}
+
+# Fast-forwards the repository.
+# Usage: pull_repo "$SCRIPT_DIR" testing13
+pull_repo(){
+    local repo_path="$1"
+    local name="$2"
+    local status=0
+
+    git -C "$repo_path" pull --ff-only < /dev/null || {
+        status=$?
+        fail "Could not update $name (exit code $status). Check the Git error and any uncommitted changes. Stopping." "$status"
+    }
+}
+
+# Checks the working tree and then fast-forwards the repository.
+# Usage: update_repo "$SCRIPT_DIR/.." l13
+update_repo(){
+    local repo_path="$1"
+    local name="$2"
+
+    assert_clean_tree "$repo_path" "$name"
+    pull_repo "$repo_path" "$name"
+}
+
 # Files
 PACKAGES="$SCRIPT_DIR/01.packages.txt"
 DEMOS="$SCRIPT_DIR/02.demos.txt"

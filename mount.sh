@@ -12,17 +12,12 @@ set -euo pipefail
 
 # l13
 printf '\n>>>>> Updating l13 <<<<<<\n'
-git -C "$SCRIPT_DIR/.." pull --ff-only < /dev/null || {
-    status=$?
-    fail "Could not update l13 (exit code $status). Stopping." "$status"
-}
+update_repo "$SCRIPT_DIR/.." l13
 
 # testing13
 printf '\n>>>>> Updating testing13 <<<<<<\n'
-git -C "$SCRIPT_DIR" pull --ff-only < /dev/null || {
-    status=$?
-    fail "Could not update testing13 (exit code $status). Stopping." "$status"
-}
+assert_clean_tree "$SCRIPT_DIR" testing13
+pull_repo "$SCRIPT_DIR" testing13
 
 # documentation13
 printf '\n>>>>> Updating documentation13 <<<<<<\n'
@@ -33,10 +28,7 @@ if [ ! -d "$SCRIPT_DIR/../documentation13" ]; then
     }
 fi
 
-git -C "$SCRIPT_DIR/../documentation13" pull --ff-only < /dev/null || {
-    status=$?
-    fail "Could not update documentation13 (exit code $status). Stopping." "$status"
-}
+update_repo "$SCRIPT_DIR/../documentation13" documentation13
     
 # packages/ is already created at the top, before sourcing helpers.sh.
 PROJECTS_DIR="$SCRIPT_DIR/../projects"
@@ -109,19 +101,7 @@ for index in "${!repositories[@]}"; do
     repository="${repositories[$index]}"
     repository_path="${repository_paths[$index]}"
     printf '\n>>>>> Updating %s <<<<<<\n' "$repository"
-    changes="$(git -C "$repository_path" status --porcelain --untracked-files=all)" || {
-        status=$?
-        fail "Could not check the working tree for $repository (exit code $status). Stopping." "$status"
-    }
-    if [ -n "$changes" ]; then
-        printf '\033[0;31m%s\033[0m\n' "$changes" >&2
-        fail "$repository has uncommitted changes or untracked files. Commit or stash them before continuing. Stopping."
-    fi
-
-    git -C "$repository_path" pull --ff-only < /dev/null || {
-        status=$?
-        fail "Could not update $repository (exit code $status). Check the Git error and any uncommitted changes. Stopping." "$status"
-    }
+    update_repo "$repository_path" "$repository"
 
     for branch in master develop; do
         printf '\n>>>>> Updating %s: %s <<<<<<\n' "$repository" "$branch"
