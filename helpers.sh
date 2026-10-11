@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PACKAGES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PACKAGES_DIR="$(cd "$SCRIPT_DIR/../packages" && pwd)"
 
 # Colors
 RED='\033[0;31m'
