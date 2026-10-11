@@ -101,7 +101,7 @@ if [ "$status" -ne 0 ]; then
 fi
 
 declare -A action_services
-for action in composer reformat review phpunit; do
+for action in composer npm-all reformat review phpunit; do
     while IFS= read -r service; do
         if [[ "$service" = *-"$action" ]]; then
             if [ -n "${action_services[$action]:-}" ]; then
@@ -118,7 +118,7 @@ for action in composer reformat review phpunit; do
     fi
 done
 
-for script in dumpAutoload composerInstall reformat review phpunit; do
+for script in dumpAutoload composerInstall npm-all reformat review phpunit; do
     printf '\n>>>>> %s: %s <<<<<<\n' "$project" "$script"
 
     case "$script" in
