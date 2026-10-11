@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Parse the full workflow before a pull can modify this running script.
+{
 set -euo pipefail
 
 fail(){
@@ -9,18 +11,43 @@ fail(){
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# l13
+printf '\n>>>>> Updating l13 <<<<<<\n'
+git -C "$SCRIPT_DIR/.." pull --ff-only < /dev/null || {
+    status=$?
+    fail "Could not update l13 (exit code $status). Stopping." "$status"
+}
+
+# testing13
 printf '\n>>>>> Updating testing13 <<<<<<\n'
 git -C "$SCRIPT_DIR" pull --ff-only < /dev/null || {
     status=$?
     fail "Could not update testing13 (exit code $status). Stopping." "$status"
 }
 
+# documentation13
+printf '\n>>>>> Updating documentation13 <<<<<<\n'
+if [ ! -d "$SCRIPT_DIR/../documentation13" ]; then
+    git clone "https://github.com/amaiagalvez/documentation13.git" "$SCRIPT_DIR/../documentation13" < /dev/null || {
+        status=$?
+        fail "Could not clone documentation13 (exit code $status). Stopping." "$status"
+    }
+fi
+
+git -C "$SCRIPT_DIR/../documentation13" pull --ff-only < /dev/null || {
+    status=$?
+    fail "Could not update documentation13 (exit code $status). Stopping." "$status"
+}
+    
+# packages    
 mkdir -p "$SCRIPT_DIR/../packages" || fail "Could not create the packages directory."
 
 source "$SCRIPT_DIR/helpers.sh"
 
 [ -f "$PACKAGES" ] || fail "$PACKAGES not found."
-[ -f "$SCRIPT_DIR/runAll.sh" ] || fail "runAll.sh not found."
+if [ "${1:-}" = "all" ]; then
+    [ -f "$SCRIPT_DIR/runAll.sh" ] || fail "runAll.sh not found."
+fi
 
 packages=()
 while IFS= read -r line || [ -n "$line" ]; do
@@ -48,6 +75,15 @@ done
 
 for package in "${packages[@]}"; do
     printf '\n>>>>> Updating %s <<<<<<\n' "$package"
+    changes="$(git -C "$PACKAGES_DIR/$package" status --porcelain --untracked-files=all)" || {
+        status=$?
+        fail "Could not check the working tree for $package (exit code $status). Stopping." "$status"
+    }
+    if [ -n "$changes" ]; then
+        printf '\033[0;31m%s\033[0m\n' "$changes" >&2
+        fail "$package has uncommitted changes or untracked files. Commit or stash them before continuing. Stopping."
+    fi
+
     git -C "$PACKAGES_DIR/$package" pull --ff-only < /dev/null || {
         status=$?
         fail "Could not update $package (exit code $status). Check the Git error and any uncommitted changes. Stopping." "$status"
@@ -65,12 +101,16 @@ for package in "${packages[@]}"; do
             fail "Could not update $package on $branch (exit code $status). Check the Git error and any uncommitted changes. Stopping." "$status"
         }
     done
-
-    bash "$SCRIPT_DIR/runAll.sh" "$package" || {
-        status=$?
-        fail "runAll failed for $package (exit code $status)." "$status"
-    }
 done
+
+if [ "${1:-}" = "all" ]; then
+    for package in "${packages[@]}"; do
+        bash "$SCRIPT_DIR/runAll.sh" "$package" || {
+            status=$?
+            fail "runAll failed for $package (exit code $status)." "$status"
+        }
+    done
+fi
 
 shopt -s nullglob
 link_scripts=("$SCRIPT_DIR"/agents/link-*.sh)
@@ -87,3 +127,4 @@ for script in "${link_scripts[@]}"; do
 done
 
 printf '\nProcess completed for all packages.\n'
+}
