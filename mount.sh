@@ -41,6 +41,16 @@ git -C "$SCRIPT_DIR/../documentation13" pull --ff-only < /dev/null || {
     
 # packages    
 mkdir -p "$SCRIPT_DIR/../packages" || fail "Could not create the packages directory."
+PROJECTS_DIR="$SCRIPT_DIR/../projects"
+mkdir -p "$PROJECTS_DIR" || fail "Could not create the projects directory."
+
+if [ -L "$PROJECTS_DIR/packages" ]; then
+    [ "$(readlink "$PROJECTS_DIR/packages")" = "../packages" ] || fail "projects/packages points to an unexpected location."
+elif [ -e "$PROJECTS_DIR/packages" ]; then
+    fail "projects/packages already exists and is not a symlink."
+else
+    ln -s ../packages "$PROJECTS_DIR/packages" || fail "Could not link projects/packages."
+fi
 
 source "$SCRIPT_DIR/helpers.sh"
 
@@ -78,7 +88,7 @@ for package in "${packages[@]}"; do
     repository_paths+=("$PACKAGES_DIR/$package")
 done
 for project in "${projects[@]}"; do
-    repository_paths+=("$SCRIPT_DIR/../$project")
+    repository_paths+=("$PROJECTS_DIR/$project")
 done
 
 for index in "${!repositories[@]}"; do

@@ -68,6 +68,7 @@ fi
 ln -s "../$SKILLS_SRC" "$SKILLS_DEST"
 
 printf 'Skills: %s -> %s\n' "$SKILLS_DEST" "$SKILLS_SRC"
+printf 'Edit agents and skills only in .github; content changes are visible through the symlinks immediately.\n'
 
 if command -v opencode >/dev/null 2>&1; then
     printf 'Restarting the OpenCode service...\n'
@@ -75,8 +76,7 @@ if command -v opencode >/dev/null 2>&1; then
         printf 'Error: links were created, but OpenCode could not be restarted. Run `opencode service restart` manually.\n' >&2
         exit 1
     fi
+    printf 'Done. OpenCode service restarted.\n'
 else
     printf 'Warning: the OpenCode CLI was not found; run `opencode service restart` when it becomes available.\n' >&2
 fi
-
-printf 'Done. OpenCode service restarted.\n'
