@@ -29,8 +29,7 @@ for script in dumpAutoload composerInstall reformat review phpunit; do
     bash "$SCRIPT_DIR/$script.sh" "${args[@]}"
     status=$?
     if [ "$status" -ne 0 ]; then
-        printf 'Error: %s failed for %s (exit code %s).\n' "$script" "$package" "$status" >&2
-        exit "$status"
+        fail "$script failed for $package (exit code $status)." "$status"
     fi
 done
 

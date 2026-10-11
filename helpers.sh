@@ -10,13 +10,18 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Errors in red on stderr; the second argument is the exit code.
+fail(){
+    printf "❌ ${RED}Error: %s${NC}\n" "$1" >&2
+    exit "${2:-1}"
+}
+
 # Files
 PACKAGES="$SCRIPT_DIR/01.packages.txt"
 DEMOS="$SCRIPT_DIR/02.demos.txt"
 
 not_found(){
-    echo -e "❌ ${RED}ERROR!!${NC} The selected package does not exist!"
-    exit 1;
+    fail "The selected package does not exist."
 }
 
 # basics, BAS, 1
@@ -42,8 +47,8 @@ parse_package_id(){
     echo "${package_id}" | xargs
 }
 
-# Contenido de los ficheros de lista que existan; los que no, se ignoran,
-# asi un fichero pendiente (02.demos.txt) no rompe la ejecucion.
+# Content of the list files that exist; the missing ones are ignored, so a
+# pending file (02.demos.txt) does not break the run.
 package_list(){
     local file
     for file in "$@"; do
@@ -68,7 +73,7 @@ find_by_short(){
     return 1
 }
 
-# Resuelve el paquete pedido: vale una carpeta de packages/ o su nombre corto.
+# Resolves the requested package: either a packages/ folder or its short name.
 # Usage: package=$(resolve_package "BAS")
 resolve_package(){
     local candidate="$1"
@@ -88,14 +93,14 @@ resolve_package(){
     return 1
 }
 
-# Crea las carpetas de cache en el host como tu usuario, para que los
-# contenedores no escriban nada como root.
+# Creates the cache folders on the host as your user, so the containers
+# never write anything as root.
 ensure_dirs(){
     mkdir -p "$COMPOSER_CACHE"
     mkdir -p "$NPM_CACHE"
 }
 
-# Borra una ruta; avisa si quedan restos creados como root.
+# Deletes a path; warns when root-owned leftovers remain.
 remove_path(){
     local target="$1"
 
@@ -108,7 +113,7 @@ remove_path(){
     fi
 }
 
-# Avisos de los requisitos que necesita cada paquete antes de ejecutar.
+# Warnings about what each package requires before running.
 missing_binary(){
     echo -e "   ${YELLOW}$1 not found: run composerInstall.sh first.${NC}"
 }
@@ -117,7 +122,7 @@ missing_config(){
     echo -e "   ${YELLOW}$1 not found: the package requires configuration.${NC}"
 }
 
-# Reutiliza la imagen local; solo la descarga cuando falta.
+# Reuses the local image; only pulls it when missing.
 pull_image(){
     if docker image inspect "$1" >/dev/null 2>&1; then
         printf 'Using local image: %s\n' "$1"
@@ -127,7 +132,7 @@ pull_image(){
     docker pull "$1"
 }
 
-# Contenedor PHP montado sobre el paquete actual.
+# PHP container mounted on the current package.
 docker_php(){
     docker run --rm --entrypoint "" -u "$USER:$GROUP" \
         -e XDEBUG_MODE=off -e HOME=/tmp \
@@ -136,7 +141,7 @@ docker_php(){
         bash -c "$1"
 }
 
-# Contenedor PHP con la cache de composer compartida entre paquetes.
+# PHP container with the Composer cache shared across packages.
 docker_composer(){
     docker run --rm --entrypoint "" -u "$USER:$GROUP" \
         -e HOME=/tmp \
@@ -148,7 +153,7 @@ docker_composer(){
         bash -c "$1"
 }
 
-# Contenedor Node montado sobre el paquete actual.
+# Node container mounted on the current package.
 docker_node(){
     docker run --rm --entrypoint "" -u "$USER:$GROUP" \
         -e HOME=/tmp \
@@ -196,7 +201,7 @@ clear_public(){
     done
 }
 
-# Ejecuta <accion> dentro de <paquete> y vuelve siempre al directorio inicial.
+# Runs <action> inside <package> and always returns to the starting directory.
 # Usage: run_in_package phpunit basics13
 run_in_package(){
     local action="$1"
@@ -213,9 +218,9 @@ run_in_package(){
     return $status
 }
 
-# Punto de entrada comun de todos los scripts: ejecuta <accion> sobre el
-# paquete pedido o, si no se pasa ninguno, sobre todos los de las listas.
-# Usage: run_tool <accion> <paquete|vacio> [ficheros-de-lista...]
+# Common entry point of every script: runs <action> on the requested
+# package or, when none is given, on every package in the lists.
+# Usage: run_tool <action> <package|empty> [list-files...]
 run_tool(){
     local action="$1"
     local target="$2"

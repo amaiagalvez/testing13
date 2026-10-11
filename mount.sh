@@ -1,15 +1,14 @@
 #!/bin/bash
 
+mkdir -p "$(dirname "${BASH_SOURCE[0]}")/../packages"
+mkdir -p "$(dirname "${BASH_SOURCE[0]}")/../projects"
+
+source "$(dirname "${BASH_SOURCE[0]}")/helpers.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/vars"
+
 # Parse the full workflow before a pull can modify this running script.
 {
 set -euo pipefail
-
-fail(){
-    printf '\033[0;31mError: %s\033[0m\n' "$1" >&2
-    exit "${2:-1}"
-}
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # l13
 printf '\n>>>>> Updating l13 <<<<<<\n'
@@ -39,8 +38,7 @@ git -C "$SCRIPT_DIR/../documentation13" pull --ff-only < /dev/null || {
     fail "Could not update documentation13 (exit code $status). Stopping." "$status"
 }
     
-# packages    
-mkdir -p "$SCRIPT_DIR/../packages" || fail "Could not create the packages directory."
+# packages/ is already created at the top, before sourcing helpers.sh.
 PROJECTS_DIR="$SCRIPT_DIR/../projects"
 mkdir -p "$PROJECTS_DIR" || fail "Could not create the projects directory."
 
@@ -52,6 +50,7 @@ else
     ln -s ../packages "$PROJECTS_DIR/packages" || fail "Could not link projects/packages."
 fi
 
+# The testing13 pull may have updated helpers.sh: reload it.
 source "$SCRIPT_DIR/helpers.sh"
 
 [ -f "$PACKAGES" ] || fail "$PACKAGES not found."

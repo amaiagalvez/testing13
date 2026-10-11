@@ -7,14 +7,12 @@ source "$(dirname "${BASH_SOURCE[0]}")/vars"
 integration_mode="${3:-}"
 
 if [ -n "$integration_mode" ] && [ "$integration_mode" != "mariadb" ]; then
-    printf 'Invalid integration mode: %s. Use mariadb.\n' "$integration_mode" >&2
-    exit 1
+    fail "Invalid integration mode: $integration_mode. Use mariadb."
 fi
 
 if [ "$integration_mode" = "mariadb" ]; then
     if [ -z "${1:-}" ] || [ -z "${BASICS13_MARIADB_DATABASE:-}" ]; then
-        printf '%s\n' 'The mariadb mode requires a package and BASICS13_MARIADB_DATABASE set to a test database.' >&2
-        exit 1
+        fail "The mariadb mode requires a package and BASICS13_MARIADB_DATABASE set to a test database."
     fi
 fi
 
@@ -24,7 +22,7 @@ run_phpunit(){
         return $?
     fi
 
-    # La red del host permite acceder a MariaDB por su puerto publicado, sin depender de una red Compose.
+    # The host network reaches MariaDB through its published port, without depending on a Compose network.
     docker run --rm --entrypoint "" --network host -u "$USER:$GROUP" \
         -e XDEBUG_MODE=off -e HOME=/tmp \
         -e "BASICS13_MARIADB_DATABASE=$BASICS13_MARIADB_DATABASE" \
@@ -44,21 +42,21 @@ phpunit(){
     local target="${1:-}"
     local coverage_mode="${2:-}"
 
-    # Limpiar directorio de cobertura anterior si existe
+    # Remove the previous coverage directory if it exists
     if [ -d tests/coverage ]; then
         rm -Rf tests/coverage
     fi
 
-    # Modo coverage: segunda posición "coverage" o "c"
+    # Coverage mode: "coverage" or "c" as the second argument
     if [ "$coverage_mode" = "coverage" ] || [ "$coverage_mode" = "c" ]; then
-        # Para coverage HTML, activamos XDEBUG_MODE=coverage y generamos reporte HTML
+        # For the HTML report, enable XDEBUG_MODE=coverage and generate it
         run_phpunit "XDEBUG_MODE=coverage vendor/bin/phpunit --display-phpunit-notices --coverage-html=tests/coverage/html" || return $?
-        # Abrir reporte de cobertura en el navegador
+        # Open the coverage report in the browser
         if [ -f tests/coverage/html/index.html ]; then
             xdg-open tests/coverage/html/index.html 2>/dev/null || firefox tests/coverage/html/index.html 2>/dev/null || echo "Report generated at: tests/coverage/html/index.html"
         fi
     else
-        # Modo normal: pasar XDEBUG_MODE=off
+        # Normal mode: run with XDEBUG_MODE=off
         run_phpunit "XDEBUG_MODE=off vendor/bin/phpunit --display-phpunit-notices"
     fi
 }

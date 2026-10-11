@@ -6,11 +6,6 @@ usage(){
     printf 'Usage: bash %s <project|short-name>\n' "${BASH_SOURCE[0]}"
 }
 
-fail(){
-    printf 'Error: %s\n' "$1" >&2
-    exit "${2:-1}"
-}
-
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     usage
     exit 0
@@ -23,8 +18,7 @@ fi
 
 projects_file="$SCRIPT_DIR/02.projects.txt"
 if [ ! -f "$projects_file" ]; then
-    printf 'Error: project list not found: %s.\n' "$projects_file" >&2
-    exit 1
+    fail "Project list not found: $projects_file."
 fi
 
 project=""
@@ -39,8 +33,7 @@ while IFS= read -r line || [ -n "$line" ]; do
 done < "$projects_file"
 
 if [ -z "$project" ]; then
-    printf 'Error: project not found: %s.\n' "$1" >&2
-    exit 1
+    fail "Project not found: $1."
 fi
 
 [[ "$project" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]] || fail "Invalid project name: $project."
@@ -89,15 +82,13 @@ for branch in master develop; do
 done
 
 if [ ! -f docker-compose.yml ]; then
-    printf 'Error: docker-compose.yml not found for %s.\n' "$project" >&2
-    exit 1
+    fail "docker-compose.yml not found for $project."
 fi
 
 services="$(docker compose --profile '*' config --services)"
 status=$?
 if [ "$status" -ne 0 ]; then
-    printf 'Error: cannot read Compose services for %s (exit code %s).\n' "$project" "$status" >&2
-    exit "$status"
+    fail "Cannot read Compose services for $project (exit code $status)." "$status"
 fi
 
 declare -A action_services
@@ -105,16 +96,14 @@ for action in composer npm-all reformat review phpunit; do
     while IFS= read -r service; do
         if [[ "$service" = *-"$action" ]]; then
             if [ -n "${action_services[$action]:-}" ]; then
-                printf 'Error: multiple Compose services match %s for %s.\n' "$action" "$project" >&2
-                exit 1
+                fail "Multiple Compose services match $action for $project."
             fi
             action_services[$action]="$service"
         fi
     done <<< "$services"
 
     if [ -z "${action_services[$action]:-}" ]; then
-        printf 'Error: Compose service ending in -%s not found for %s.\n' "$action" "$project" >&2
-        exit 1
+        fail "Compose service ending in -$action not found for $project."
     fi
 done
 
@@ -143,8 +132,7 @@ for script in dumpAutoload composerInstall npm-all reformat review phpunit; do
 
     status=$?
     if [ "$status" -ne 0 ]; then
-        printf 'Error: %s failed for %s (exit code %s).\n' "$script" "$project" "$status" >&2
-        exit "$status"
+        fail "$script failed for $project (exit code $status)." "$status"
     fi
 done
 
