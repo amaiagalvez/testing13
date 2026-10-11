@@ -15,7 +15,7 @@ PACKAGES="$SCRIPT_DIR/01.packages.txt"
 DEMOS="$SCRIPT_DIR/02.demos.txt"
 
 not_found(){
-    echo -e "❌ ${RED}ADI!!${NC} Aukeratutako paketea ez da existitzen!!"
+    echo -e "❌ ${RED}ERROR!!${NC} The selected package does not exist!"
     exit 1;
 }
 
@@ -102,25 +102,25 @@ remove_path(){
     [ -e "$target" ] || return 0
 
     if ! rm -Rf "$target" 2>/dev/null; then
-        echo -e "   ${RED}Ezin da $target ezabatu: root-ek sortutako fitxategiak ditu.${NC}"
-        echo -e "   ${YELLOW}Konpondu jabetza: sudo chown -R \$USER:\$GROUP .${NC}"
+        echo -e "   ${RED}Cannot remove $target: it contains files created by root.${NC}"
+        echo -e "   ${YELLOW}Fix ownership: sudo chown -R \$USER:\$GROUP .${NC}"
         return 1
     fi
 }
 
 # Avisos de los requisitos que necesita cada paquete antes de ejecutar.
 missing_binary(){
-    echo -e "   ${YELLOW}Ez dago $1: composerInstall.sh exekutatu aurretik.${NC}"
+    echo -e "   ${YELLOW}$1 not found: run composerInstall.sh first.${NC}"
 }
 
 missing_config(){
-    echo -e "   ${YELLOW}Ez dago $1: paketeak konfigurazioa behar du.${NC}"
+    echo -e "   ${YELLOW}$1 not found: the package requires configuration.${NC}"
 }
 
 # Reutiliza la imagen local; solo la descarga cuando falta.
 pull_image(){
     if docker image inspect "$1" >/dev/null 2>&1; then
-        printf 'Usando imagen local: %s\n' "$1"
+        printf 'Using local image: %s\n' "$1"
         return 0
     fi
 

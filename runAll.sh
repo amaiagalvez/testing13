@@ -3,7 +3,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/helpers.sh"
 
 usage(){
-    printf 'Uso: bash %s <paquete|nombre-corto>\n' "${BASH_SOURCE[0]}"
+    printf 'Usage: bash %s <package|short-name>\n' "${BASH_SOURCE[0]}"
 }
 
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
@@ -29,9 +29,9 @@ for script in dumpAutoload composerInstall reformat review phpunit; do
     bash "$SCRIPT_DIR/$script.sh" "${args[@]}"
     status=$?
     if [ "$status" -ne 0 ]; then
-        printf 'Error: %s ha fallado para %s (codigo %s).\n' "$script" "$package" "$status" >&2
+        printf 'Error: %s failed for %s (exit code %s).\n' "$script" "$package" "$status" >&2
         exit "$status"
     fi
 done
 
-printf '\nProceso completado para %s.\n' "$package"
+printf '\nProcess completed for %s.\n' "$package"

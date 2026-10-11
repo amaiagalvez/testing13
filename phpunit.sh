@@ -7,13 +7,13 @@ source "$(dirname "${BASH_SOURCE[0]}")/vars"
 integration_mode="${3:-}"
 
 if [ -n "$integration_mode" ] && [ "$integration_mode" != "mariadb" ]; then
-    printf 'Modo de integración no válido: %s. Usa mariadb.\n' "$integration_mode" >&2
+    printf 'Invalid integration mode: %s. Use mariadb.\n' "$integration_mode" >&2
     exit 1
 fi
 
 if [ "$integration_mode" = "mariadb" ]; then
     if [ -z "${1:-}" ] || [ -z "${BASICS13_MARIADB_DATABASE:-}" ]; then
-        printf '%s\n' 'El modo mariadb requiere un paquete y BASICS13_MARIADB_DATABASE con una base de pruebas.' >&2
+        printf '%s\n' 'The mariadb mode requires a package and BASICS13_MARIADB_DATABASE set to a test database.' >&2
         exit 1
     fi
 fi
@@ -55,7 +55,7 @@ phpunit(){
         run_phpunit "XDEBUG_MODE=coverage vendor/bin/phpunit --display-phpunit-notices --coverage-html=tests/coverage/html" || return $?
         # Abrir reporte de cobertura en el navegador
         if [ -f tests/coverage/html/index.html ]; then
-            xdg-open tests/coverage/html/index.html 2>/dev/null || firefox tests/coverage/html/index.html 2>/dev/null || echo "Reporte generado en: tests/coverage/html/index.html"
+            xdg-open tests/coverage/html/index.html 2>/dev/null || firefox tests/coverage/html/index.html 2>/dev/null || echo "Report generated at: tests/coverage/html/index.html"
         fi
     else
         # Modo normal: pasar XDEBUG_MODE=off

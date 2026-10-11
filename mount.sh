@@ -1,0 +1,89 @@
+#!/bin/bash
+
+set -euo pipefail
+
+fail(){
+    printf '\033[0;31mError: %s\033[0m\n' "$1" >&2
+    exit "${2:-1}"
+}
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+printf '\n>>>>> Updating testing13 <<<<<<\n'
+git -C "$SCRIPT_DIR" pull --ff-only < /dev/null || {
+    status=$?
+    fail "Could not update testing13 (exit code $status). Stopping." "$status"
+}
+
+mkdir -p "$SCRIPT_DIR/../packages" || fail "Could not create the packages directory."
+
+source "$SCRIPT_DIR/helpers.sh"
+
+[ -f "$PACKAGES" ] || fail "$PACKAGES not found."
+[ -f "$SCRIPT_DIR/runAll.sh" ] || fail "runAll.sh not found."
+
+packages=()
+while IFS= read -r line || [ -n "$line" ]; do
+    package="$(parse_name "$line")" || fail "Could not read the package: $line."
+    [ -n "$package" ] || continue
+
+    [[ "$package" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]] || fail "Invalid package name: $package."
+    packages+=("$package")
+done < "$PACKAGES"
+
+[ "${#packages[@]}" -gt 0 ] || fail "No packages found in $PACKAGES."
+
+for package in "${packages[@]}"; do
+    if [ -d "$PACKAGES_DIR/$package" ]; then
+        printf 'Keeping existing package: %s\n' "$package"
+        continue
+    fi
+
+    printf '\n>>>>> Cloning %s <<<<<<\n' "$package"
+    git clone "https://github.com/amaiagalvez/$package.git" "$PACKAGES_DIR/$package" < /dev/null || {
+        status=$?
+        fail "Could not clone $package (exit code $status). runAll will not be executed." "$status"
+    }
+done
+
+for package in "${packages[@]}"; do
+    printf '\n>>>>> Updating %s <<<<<<\n' "$package"
+    git -C "$PACKAGES_DIR/$package" pull --ff-only < /dev/null || {
+        status=$?
+        fail "Could not update $package (exit code $status). Check the Git error and any uncommitted changes. Stopping." "$status"
+    }
+
+    for branch in master develop; do
+        printf '\n>>>>> Updating %s: %s <<<<<<\n' "$package" "$branch"
+        git -C "$PACKAGES_DIR/$package" switch "$branch" < /dev/null || {
+            status=$?
+            fail "Could not switch $package to $branch (exit code $status). Check the Git error and any uncommitted changes. Stopping." "$status"
+        }
+
+        git -C "$PACKAGES_DIR/$package" pull --ff-only < /dev/null || {
+            status=$?
+            fail "Could not update $package on $branch (exit code $status). Check the Git error and any uncommitted changes. Stopping." "$status"
+        }
+    done
+
+    bash "$SCRIPT_DIR/runAll.sh" "$package" || {
+        status=$?
+        fail "runAll failed for $package (exit code $status)." "$status"
+    }
+done
+
+shopt -s nullglob
+link_scripts=("$SCRIPT_DIR"/agents/link-*.sh)
+shopt -u nullglob
+
+[ "${#link_scripts[@]}" -gt 0 ] || fail "No link scripts found in $SCRIPT_DIR/agents."
+
+for script in "${link_scripts[@]}"; do
+    printf '\n>>>>> %s <<<<<<\n' "$(basename "$script")"
+    bash "$script" "$SCRIPT_DIR/.." || {
+        status=$?
+        fail "$(basename "$script") failed (exit code $status)." "$status"
+    }
+done
+
+printf '\nProcess completed for all packages.\n'
