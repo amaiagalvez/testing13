@@ -30,9 +30,9 @@ fi
 
 update_repo "$SCRIPT_DIR/../documentation13" documentation13
     
-# packages/ is already created at the top, before sourcing helpers.sh.
+# packages
+PACKAGES_DIR="$SCRIPT_DIR/../packages"
 PROJECTS_DIR="$SCRIPT_DIR/../projects"
-mkdir -p "$PROJECTS_DIR" || fail "Could not create the projects directory."
 
 if [ -L "$PROJECTS_DIR/packages" ]; then
     [ "$(readlink "$PROJECTS_DIR/packages")" = "../packages" ] || fail "projects/packages points to an unexpected location."

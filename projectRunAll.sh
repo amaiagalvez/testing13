@@ -56,10 +56,6 @@ changes="$(git status --porcelain --untracked-files=all)" || {
     status=$?
     fail "Could not check the working tree for $project (exit code $status)." "$status"
 }
-if [ -n "$changes" ]; then
-    printf '%s\n' "$changes" >&2
-    fail "$project has uncommitted changes or untracked files. Commit or stash them before continuing."
-fi
 
 git symbolic-ref --quiet --short HEAD > /dev/null || fail "$project has no active branch. Switch to a branch before continuing."
 
@@ -68,18 +64,6 @@ git pull --ff-only < /dev/null || {
     status=$?
     fail "Could not update $project on the current branch (exit code $status)." "$status"
 }
-
-for branch in master develop; do
-    printf '\n>>>>> Updating %s: %s <<<<<<\n' "$project" "$branch"
-    git switch "$branch" < /dev/null || {
-        status=$?
-        fail "Could not switch $project to $branch (exit code $status)." "$status"
-    }
-    git pull --ff-only < /dev/null || {
-        status=$?
-        fail "Could not update $project on $branch (exit code $status)." "$status"
-    }
-done
 
 if [ ! -f docker-compose.yml ]; then
     fail "docker-compose.yml not found for $project."
