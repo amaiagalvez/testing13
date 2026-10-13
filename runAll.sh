@@ -18,7 +18,7 @@ fi
 
 package="$(resolve_package "$1")" || not_found
 
-for script in dumpAutoload composerInstall reformat review phpunit; do
+for script in dumpAutoload composerInstall reformat review phpunit dusktest; do
     printf '\n>>>>> %s: %s <<<<<<\n' "$package" "$script"
 
     args=("$package")
