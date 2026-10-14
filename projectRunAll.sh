@@ -76,7 +76,7 @@ if [ "$status" -ne 0 ]; then
 fi
 
 declare -A action_services
-for action in composer npm-all reformat review phpunit; do
+for action in composer npm-all reformat review phpunit dusk; do
     while IFS= read -r service; do
         if [[ "$service" = *-"$action" ]]; then
             if [ -n "${action_services[$action]:-}" ]; then
@@ -91,7 +91,7 @@ for action in composer npm-all reformat review phpunit; do
     fi
 done
 
-for script in dumpAutoload composerInstall npm-all reformat review phpunit; do
+for script in dumpAutoload composerInstall npm-all reformat review phpunit dusk; do
     printf '\n>>>>> %s: %s <<<<<<\n' "$project" "$script"
 
     case "$script" in
@@ -107,6 +107,11 @@ for script in dumpAutoload composerInstall npm-all reformat review phpunit; do
         phpunit)
             docker compose --profile phpunit run --rm -e XDEBUG_MODE=coverage \
                 "${action_services[phpunit]}"
+            ;;
+        dusk)
+            docker compose --profile dusk run --rm -e XDEBUG_MODE=off \
+                "${action_services[dusk]}" \
+                php vendor/bin/phpunit -c /packages/basics13/tooling/phpunit.dusk.xml
             ;;
         *)
             docker compose --profile "$script" run --rm -e XDEBUG_MODE=off \
