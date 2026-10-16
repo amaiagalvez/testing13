@@ -135,6 +135,6 @@ docker compose exec -T "$dusk_service" curl --fail --silent --show-error \
     --retry 10 --retry-delay 1 --retry-all-errors --connect-timeout 5 --max-time 10 \
     --output /dev/null http://localhost/ || fail "The Dusk application is not responding."
 
-docker compose exec -T -e XDEBUG_MODE=off "$dusk_service" \
+docker compose exec -T --user "$(id -u):$(id -g)" -e XDEBUG_MODE=off "$dusk_service" \
     php artisan dusk --no-interaction --without-tty "${browser_paths[@]}" "$@"
 exit $?
