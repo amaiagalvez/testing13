@@ -3,7 +3,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/helpers.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/vars"
 
-# Usage: BASICS13_MARIADB_DATABASE=laravel_test BASICS13_MARIADB_PORT=13306 ./phpunit.sh BAS coverage mariadb
+# Usage: BASICS13_MARIADB_DATABASE=laravel_phpunit BASICS13_MARIADB_PORT=13306 ./phpunit.sh BAS coverage mariadb
 integration_mode="${3:-}"
 
 if [ -n "$integration_mode" ] && [ "$integration_mode" != "mariadb" ]; then
