@@ -40,6 +40,12 @@ if [ "$#" -gt 0 ] && [[ "$1" != -* ]]; then
 fi
 
 project_target="${DUSK_PROJECT:-demo13}"
+
+# Check if another Dusk run is already using this project's lock
+command -v flock >/dev/null 2>&1 || fail "flock is required to prevent concurrent Dusk runs."
+exec 9> "${TMPDIR:-/tmp}/testing13-dusk-$(id -u)-${project_target}.lock" || fail "Cannot open the Dusk lock."
+flock -n 9 || { echo "WARNING: Another Dusk run is already using $project_target. Exiting."; exit 1; }
+
 projects_file="$SCRIPT_DIR/02.projects.txt"
 [ -f "$projects_file" ] || fail "Project list not found: $projects_file."
 
