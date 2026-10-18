@@ -9,7 +9,7 @@ Usage: bash testing13/dusktest.sh [package|short-name|all|app] [Dusk options...]
 Without a target, runs the browser suites of all installed packages.
 app runs only the consuming application's browser tests.
 Packages without browser tests are skipped in all mode.
-PRO selects the integrated project and epic flows from customer-projects13
+PRO selects the integrated project and epic flows from entity-projects13
 when projects13 has no standalone browser suite.
 
 Examples:
@@ -83,14 +83,14 @@ add_package_suite(){
             return 0
         fi
         if [ "$package" = "projects13" ]; then
-            local bridge_path="vendor/amaia/customer-projects13/tests/Browser"
+            local bridge_path="vendor/amaia/entity-projects13/tests/Browser"
             local domain
             for domain in Projects Epics; do
                 has_browser_tests "$project_dir/$bridge_path/$domain" \
                     || fail "Integrated $domain browser suite not found in $project."
                 browser_paths+=("$bridge_path/$domain")
             done
-            printf 'Using customer-projects13 browser integration for projects13.\n'
+            printf 'Using entity-projects13 browser integration for projects13.\n'
             return 0
         fi
         fail "No installed browser suite for $package in $project."
