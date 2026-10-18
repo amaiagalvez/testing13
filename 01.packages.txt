@@ -1,4 +1,4 @@
 basics13, BAS, 1
-entities13, CUS, 2
+entities13, ENT, 2
 projects13, PRO, 3
-entity-projects13, CUSPRO, 4
+entity-projects13, ENTPRO, 4
