@@ -55,6 +55,17 @@ if [[ -L "$SKILLS_DEST" ]]; then
 fi
 ln -s "../$SKILLS_SRC" "$SKILLS_DEST"
 
+# Zone rules: Claude loads .claude/rules/*.md by their `paths:` frontmatter.
+RULES_SRC=".github/instructions"
+RULES_DEST=".claude/rules"
+if [[ -e "$RULES_DEST" && ! -L "$RULES_DEST" ]]; then
+    fail "$RULES_DEST exists and is not a symlink; it will not be replaced."
+fi
+if [[ -L "$RULES_DEST" ]]; then
+    rm -f "$RULES_DEST"
+fi
+ln -s "../$RULES_SRC" "$RULES_DEST"
+
 printf 'Agents (.github/agents -> .claude/agents)\n'
 for src in "$AGENTS_SRC"/*.agent.md; do
     [[ -e "$src" ]] || continue
