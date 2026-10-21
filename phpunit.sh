@@ -50,7 +50,8 @@ phpunit(){
     # Coverage mode: "coverage" or "c" as the second argument
     if [ "$coverage_mode" = "coverage" ] || [ "$coverage_mode" = "c" ]; then
         # For the HTML report, enable XDEBUG_MODE=coverage and generate it
-        run_phpunit "XDEBUG_MODE=coverage vendor/bin/phpunit --display-phpunit-notices --coverage-html=tests/coverage/html" || return $?
+        # Also display coverage summary in terminal with --coverage-text
+        run_phpunit "XDEBUG_MODE=coverage vendor/bin/phpunit --display-phpunit-notices --coverage-html=tests/coverage/html --coverage-text" || return $?
         # Open the coverage report in the browser
         if [ -f tests/coverage/html/index.html ]; then
             xdg-open tests/coverage/html/index.html 2>/dev/null || firefox tests/coverage/html/index.html 2>/dev/null || echo "Report generated at: tests/coverage/html/index.html"
