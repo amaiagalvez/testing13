@@ -39,6 +39,33 @@ run_phpunit(){
         bash -c "$1 --group mariadb"
 }
 
+# Appends the totals of a passing coverage run to the package history,
+# as basics13/tooling/run-phpunit-with-coverage.sh does for the app.
+save_coverage_summary(){
+    local summary_file="tests/test-coverage-summary.txt"
+    local summary
+
+    # The C locale keeps the byte ranges of the ANSI regex valid on the host
+    summary="$(LC_ALL=C sed -E 's/\x1B\[[0-9;?]*[ -/]*[@-~]//g; s/\r$//' "$1" \
+        | awk '
+            /^(OK \(|Tests: |Time: )/ { print; next }
+            /^ *Summary:/ { in_summary = 1; next }
+            in_summary && /^ *(Classes|Methods|Lines):/ { print; next }
+            { in_summary = 0 }
+        ' \
+        | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+
+    if [[ "$summary" != *Time:* || "$summary" != *Lines:* ]]; then
+        printf '%s\n' 'Coverage summary could not be extracted from test output.' >&2
+        return 1
+    fi
+
+    {
+        printf 'Executed at: %s\n' "$(date '+%Y-%m-%d %H:%M:%S %Z')"
+        printf '%s\n' "$summary"
+    } >> "$summary_file"
+}
+
 phpunit(){
     [ -f vendor/bin/phpunit ] || { missing_binary vendor/bin/phpunit; return 1; }
     [ -f phpunit.xml ] || [ -f phpunit.xml.dist ] || { missing_config phpunit.xml; return 1; }
@@ -55,7 +82,16 @@ phpunit(){
     if [ "$coverage_mode" = "coverage" ] || [ "$coverage_mode" = "c" ]; then
         # For the HTML report, enable XDEBUG_MODE=coverage and generate it
         # Also display coverage summary in terminal with --coverage-text
-        run_phpunit "XDEBUG_MODE=coverage vendor/bin/phpunit --display-phpunit-notices --coverage-html=tests/coverage/html --coverage-text" || return $?
+        local output_file
+        output_file="$(mktemp)"
+        run_phpunit "XDEBUG_MODE=coverage vendor/bin/phpunit --display-phpunit-notices --coverage-html=tests/coverage/html --coverage-text" | tee "$output_file"
+        local test_status=${PIPESTATUS[0]}
+        if [ "$test_status" -eq 0 ]; then
+            save_coverage_summary "$output_file"
+            test_status=$?
+        fi
+        rm -f "$output_file"
+        [ "$test_status" -eq 0 ] || return "$test_status"
         # Open the coverage report in the browser
         if [ -f tests/coverage/html/index.html ]; then
             xdg-open tests/coverage/html/index.html 2>/dev/null || firefox tests/coverage/html/index.html 2>/dev/null || echo "Report generated at: tests/coverage/html/index.html"
