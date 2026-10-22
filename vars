@@ -1,5 +1,5 @@
 PHP_VERSION="8.5"
-NODE_VERSION="24-bullseye"
+NODE_VERSION="26-trixie"
 
 USER="$(id -u)"
 GROUP="$(id -g)"
