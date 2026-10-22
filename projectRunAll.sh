@@ -111,7 +111,7 @@ for script in dumpAutoload composerInstall npm-all reformat review phpunit dusk;
         dusk)
             docker compose --profile dusk run --rm -e XDEBUG_MODE=off \
                 "${action_services[dusk]}" \
-                php vendor/bin/phpunit -c /packages/basics13/tooling/phpunit.dusk.xml
+                php vendor/bin/phpunit -c phpunit.dusk.xml
             ;;
         *)
             docker compose --profile "$script" run --rm -e XDEBUG_MODE=off \

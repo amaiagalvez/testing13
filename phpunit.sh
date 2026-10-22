@@ -23,16 +23,20 @@ run_phpunit(){
     fi
 
     # The host network reaches MariaDB through its published port, without depending on a Compose network.
+    # Only the mariadb group: the rest of the suite already runs on SQLite.
     docker run --rm --entrypoint "" --network host -u "$USER:$GROUP" \
         -e XDEBUG_MODE=off -e HOME=/tmp \
         -e "BASICS13_MARIADB_DATABASE=$BASICS13_MARIADB_DATABASE" \
+        -e DB_CONNECTION=mysql \
+        -e "DB_DATABASE=$BASICS13_MARIADB_DATABASE" \
         -e "DB_HOST=${BASICS13_MARIADB_HOST:-127.0.0.1}" \
         -e "DB_PORT=${BASICS13_MARIADB_PORT:-3306}" \
         -e "DB_USERNAME=${BASICS13_MARIADB_USERNAME:-laravel}" \
         -e "DB_PASSWORD=${BASICS13_MARIADB_PASSWORD:-laravel}" \
         -e DB_URL= \
+        -v "$PACKAGES_DIR":/packages \
         -v "$(pwd)":/app-docker -w /app-docker "webdevops/php-apache-dev:$PHP_VERSION" \
-        bash -c "$1"
+        bash -c "$1 --group mariadb"
 }
 
 phpunit(){
