@@ -3,6 +3,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/helpers.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/vars"
 
+# Usage: PHPUNIT_ARGS="--no-progress --filter=Name" ./phpunit.sh PRO
 # Usage: BASICS13_MARIADB_DATABASE=laravel_phpunit BASICS13_MARIADB_PORT=13306 ./phpunit.sh BAS coverage mariadb
 integration_mode="${3:-}"
 
@@ -84,7 +85,7 @@ phpunit(){
         # Also display coverage summary in terminal with --coverage-text
         local output_file
         output_file="$(mktemp)"
-        run_phpunit "XDEBUG_MODE=coverage vendor/bin/phpunit --display-phpunit-notices --coverage-html=tests/coverage/html --coverage-text" | tee "$output_file"
+        run_phpunit "XDEBUG_MODE=coverage vendor/bin/phpunit --display-phpunit-notices --coverage-html=tests/coverage/html --coverage-text ${PHPUNIT_ARGS:-}" | tee "$output_file"
         local test_status=${PIPESTATUS[0]}
         if [ "$test_status" -eq 0 ]; then
             save_coverage_summary "$output_file"
@@ -98,7 +99,7 @@ phpunit(){
         fi
     else
         # Normal mode: run with XDEBUG_MODE=off
-        run_phpunit "XDEBUG_MODE=off vendor/bin/phpunit --display-phpunit-notices"
+        run_phpunit "XDEBUG_MODE=off vendor/bin/phpunit --display-phpunit-notices ${PHPUNIT_ARGS:-}"
     fi
 }
 

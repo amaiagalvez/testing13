@@ -3,11 +3,13 @@
 source "$(dirname "${BASH_SOURCE[0]}")/helpers.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/vars"
 
+# Usage: PHPSTAN_ARGS="--no-progress --error-format=raw" ./review.sh PRO
+
 review(){
     [ -f vendor/bin/phpstan ] || { missing_binary vendor/bin/phpstan; return 1; }
     [ -f phpstan.neon ] || [ -f phpstan.neon.dist ] || { missing_config phpstan.neon; return 1; }
 
-    docker_php "vendor/bin/phpstan analyse --memory-limit=1G"
+    docker_php "vendor/bin/phpstan analyse --memory-limit=1G ${PHPSTAN_ARGS:-}"
 }
 
 pull_image "webdevops/php-apache-dev:$PHP_VERSION" || exit 1
