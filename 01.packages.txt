@@ -1,4 +1,5 @@
 basics13, BAS, 1
 entities13, ENT, 2
-projects13, PRO, 3
-entity-projects13, ENTPRO, 4
+locations13, LOC, 3
+projects13, PRO, 4
+entity-projects13, ENTPRO, 5
