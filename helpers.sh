@@ -62,7 +62,7 @@ update_repo(){
 
 # Files
 PACKAGES="$SCRIPT_DIR/01.packages.txt"
-DEMOS="$SCRIPT_DIR/02.demos.txt"
+DEMOS="$SCRIPT_DIR/02.projects.txt"
 
 not_found(){
     fail "The selected package does not exist."
@@ -91,8 +91,7 @@ parse_package_id(){
     echo "${package_id}" | xargs
 }
 
-# Content of the list files that exist; the missing ones are ignored, so a
-# pending file (02.demos.txt) does not break the run.
+# Content of the list files that exist
 package_list(){
     local file
     for file in "$@"; do
