@@ -282,7 +282,7 @@ stop_dusk_server() {
 run_migrations() {
     printf '\n📦 Running migrations for Dusk database...\n'
     docker exec -u "$(id -u):$(id -g)" -e XDEBUG_MODE=off -e APP_ENV=dusk "$SERVER_CONTAINER_ID" \
-        php artisan migrate:fresh --force --env=dusk || fail "Migrations failed"
+        php artisan migrate:fresh --seed --seeder="Database\\Seeders\\AccessSeeder" --force --env=dusk || fail "Migrations failed"
 }
 
 # Function to run tests for a single browser/size combination
