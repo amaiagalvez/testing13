@@ -74,13 +74,11 @@ phpunit(){
     local target="${1:-}"
     local coverage_mode="${2:-}"
 
-    # Remove the previous coverage directory if it exists
-    if [ -d tests/coverage ]; then
-        rm -Rf tests/coverage
-    fi
-
     # Coverage mode: "coverage" or "c" as the second argument
     if [ "$coverage_mode" = "coverage" ] || [ "$coverage_mode" = "c" ]; then
+        # Remove the previous report only when a new one is generated,
+        # so a later run without coverage (e.g. MariaDB in runAll.sh) keeps it
+        rm -Rf tests/coverage
         # For the HTML report, enable XDEBUG_MODE=coverage and generate it
         # Also display coverage summary in terminal with --coverage-text
         local output_file
