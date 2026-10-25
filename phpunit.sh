@@ -5,6 +5,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/vars"
 
 # Usage: PHPUNIT_ARGS="--no-progress --filter=Name" ./phpunit.sh PRO
 # Usage: BASICS13_MARIADB_DATABASE=laravel_phpunit BASICS13_MARIADB_PORT=13306 ./phpunit.sh BAS coverage mariadb
+# The mariadb mode refreshes the database the tests use, so it only runs against a database whose
+# name ends in _test or contains phpunit: a shared or development database is refused.
 integration_mode="${3:-}"
 
 if [ -n "$integration_mode" ] && [ "$integration_mode" != "mariadb" ]; then
@@ -15,6 +17,11 @@ if [ "$integration_mode" = "mariadb" ]; then
     if [ -z "${1:-}" ] || [ -z "${BASICS13_MARIADB_DATABASE:-}" ]; then
         fail "The mariadb mode requires a package and BASICS13_MARIADB_DATABASE set to a test database."
     fi
+
+    case "$BASICS13_MARIADB_DATABASE" in
+        *_test|*phpunit*) ;;
+        *) fail "Refusing to refresh '$BASICS13_MARIADB_DATABASE': the mariadb mode needs a database whose name ends in _test or contains phpunit." ;;
+    esac
 fi
 
 run_phpunit(){
